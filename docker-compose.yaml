@@ -1,0 +1,47 @@
+version: '3.7'
+services:
+  mysql:
+    platform: linux/x86_64
+    image: mysql:8.0.26
+    container_name: pasteit-mysql
+    ports:
+      - 3306:3306
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=root --execute \"SHOW DATABASES;\""
+      interval: 2s
+      timeout: 20s
+      retries: 10
+
+  mongodb:
+    image: mongo
+    container_name: pasteit-mongodb
+    ports:
+      - 27017:27017
+    volumes:
+      - data:/data
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=rootuser
+      - MONGO_INITDB_ROOT_PASSWORD=rootpass
+
+  pasteit-services:
+    image: rimonmostafiz/pasteit-services:latest
+    container_name: "pasteit-services"
+    ports:
+      - 8088:8088
+    depends_on:
+      mysql:
+        condition: service_started
+      mongodb:
+        condition: service_started
+
+volumes:
+  data: { }
+  db_data: { }
+
+networks:
+  default:
+    driver: bridge
